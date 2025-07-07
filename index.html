@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2.0</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            color: #333;
+            height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: #f4f4f9;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+
+        textarea {
+            width: 80%;
+            height: 200px;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: none;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        textarea.dark-mode {
+            background-color: #2b2b2b;
+            color: #f4f4f9;
+            border-color: #555;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .output-container {
+            width: 80%;
+            margin: 20px 0;
+        }
+
+        .output-container p {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #080808;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+
+        .chunk-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .chunk-navigation button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .chunk-info {
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .dark-mode-toggle {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dark-mode-toggle.dark-mode {
+            background-color: #555;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>BETA</h1>
+    <textarea id="inputText" placeholder="Enter your text here..."></textarea>
+    <button onclick="splitTextWithSpacing()">Split Text with Spacing</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+
+    <div class="output-container" id="outputContainer"></div>
+
+    <script>
+        let chunks = [];
+        let currentChunkIndex = 0;
+
+        const wordMap = {
+            
+           
+            "boobs": "bub",
+           
+
+
+        };
+
+        const specialCharacterMap = {
+            "À": "A", "Á": "A", "Â": "A", "Ã": "A", "Ä": "A", "Å": "A", "Ā": "A", "Ą": "A", "Ă": "A",
+            "Ç": "C", "Ć": "C", "Č": "C", "Ĉ": "C", "Ċ": "C",
+            "È": "E", "É": "E", "Ê": "E", "Ë": "E", "Ē": "E", "Ę": "E", "Ě": "E", "Ĕ": "E", "Ė": "E",
+            "Ì": "I", "Í": "I", "Î": "I", "Ï": "I", "Ī": "I", "Ĩ": "I", "Ĭ": "I", "Į": "I", "İ": "I",
+            "Ñ": "N", "Ń": "N", "Ň": "N", "Ņ": "N", "Ŋ": "N",
+            "Ò": "O", "Ó": "O", "Ô": "O", "Õ": "O", "Ö": "O", "Ō": "O", "Ő": "O", "Ø": "O", "Ŏ": "O",
+            "Ù": "U", "Ú": "U", "Û": "U", "Ü": "U", "Ū": "U", "Ů": "U", "Ű": "U", "Ŭ": "U", "Ũ": "U", "Ų": "U",
+            "Ý": "Y", "Ÿ": "Y", "Ŷ": "Y",
+            "Ź": "Z", "Ż": "Z", "Ž": "Z",
+            "Æ": "AE", "Ǽ": "AE", "ß": "SS",
+            "à": "a", "á": "a", "â": "a", "ã": "a", "ä": "a", "å": "a", "ā": "a", "ą": "a", "ă": "a",
+            "ç": "c", "ć": "c", "č": "c", "ĉ": "c", "ċ": "c",
+            "è": "e", "é": "e", "ê": "e", "ë": "e", "ē": "e", "ę": "e", "ě": "e", "ĕ": "e", "ė": "e",
+            "ì": "i", "í": "i", "î": "i", "ï": "i", "ī": "i", "ĩ": "i", "ĭ": "i", "į": "i",
+            "ñ": "n", "ń": "n", "ň": "n", "ņ": "n", "ŋ": "n",
+            "ò": "o", "ó": "o", "ô": "o", "õ": "o", "ö": "o", "ō": "o", "ő": "o", "ø": "o", "ŏ": "o",
+            "ù": "u", "ú": "u", "û": "u", "ü": "u", "ū": "u", "ů": "u", "ű": "u", "ŭ": "u", "ũ": "u", "ų": "u",
+            "ý": "y", "ÿ": "y", "ŷ": "y",
+            "ź": "z", "ż": "z", "ž": "z",
+            "æ": "ae"
+        };
+
+        const suffixes = ["ing", "ed", "es", "s"];
+
+        function replaceSpecialCharacters(inputText) {
+            return inputText.replace(/[ÀÁÂÃÄÅĀĄĂÇĆČĈĊÈÉÊËĒĘĚĔĖÌÍÎÏĪĨĬĮİÑŃŇŅŊÒÓÔÕÖŌŐØŎÙÚÛÜŪŮŰŬŨŲÝŸŶŹŻŽÆǼßàáâãäåāąăçćčĉċèéêëēęěĕėìíîïīĩĭįñńňņŋòóôõöōőøŏùúûüūůűŭũųýÿŷźżžæ]/g, (match) => {
+                return specialCharacterMap[match] || match;
+            });
+        }
+
+        function replaceWordsAutomatically(inputText) {
+            return inputText.replace(/\b([a-zA-Z]+)\b/g, (word) => {
+                const baseWord = word.toLowerCase();
+                const replacement = wordMap[baseWord] || word;
+                const matchedSuffix = suffixes.find((suffix) => word.endsWith(suffix));
+                if (matchedSuffix && wordMap[baseWord.slice(0, -matchedSuffix.length)]) {
+                    return wordMap[baseWord.slice(0, -matchedSuffix.length)] + matchedSuffix;
+                }
+                return replacement;
+            });
+        }
+
+        function cleanUpText(inputText) {
+    inputText = inputText
+        .replace(/[~=\[\]\{\}\|\/]+/g, ' ')
+        .replace(/-{2,}/g, ' ')
+        .replace(/—{2,}/g, ' ')
+        .replace(/—/g, ' ')
+        .replace(/\.\.\.+/g, '.')
+        .replace(/_{2,}/g, ' ')
+        .replace(/\b\d+\.\s+/g, ' ')
+        .replace(/\*{2,}/g, ' ')
+        .replace(/\*+/g, ' ') // Removes continuous sequences of asterisks
+        .replace(/\bChapter Text\b/gi, '')
+        .replace(/(i can't help with that|i'm unable to assist|this content violates|against openai's policy|i'm sorry, but i can't|i'm not able to help with|refuse to continue|cannot fulfill this request|due to policy restrictions|i'm sorry, i can't assist with that request\.|as an ai developed by openai|this goes against my programming|i'm afraid i can't help with that|i'm not programmed to do that|that request is not allowed|i must decline to help with that|i cannot generate that content|let’s keep things respectful|that request is against my guidelines|sorry, but i can't generate that|i'm not able to generate that content|i'm sorry, that goes against openai's use policies|i can't provide that information|i recommend discussing with a trusted adult or professional|that’s not something i can do|let's move on to a different topic|i'm sorry, but that request is inappropriate|i'm sorry, but i must follow ethical guidelines)/gi,' ').trim()
+        .replace(/\s+$/gm, '')
+        .replace(/&/g, 'and ');
+
+    return inputText;
+}
+
+        function splitTextWithSpacing() {
+            let inputText = document.getElementById('inputText').value;
+
+            // Replace special characters
+            inputText = replaceSpecialCharacters(inputText);
+
+            // Clean up the text
+            inputText = cleanUpText(inputText);
+
+            // Automatically replace words
+            inputText = replaceWordsAutomatically(inputText);
+
+            const chunkSize = 6600;
+            chunks = [];
+            let currentPosition = 0;
+
+            while (currentPosition < inputText.length) {
+                let nextChunkEnd = currentPosition + chunkSize;
+
+                if (nextChunkEnd < inputText.length) {
+                    let lastSpace = inputText.lastIndexOf(' ', nextChunkEnd);
+                    nextChunkEnd = lastSpace > currentPosition ? lastSpace : nextChunkEnd;
+                }
+
+                chunks.push(inputText.slice(currentPosition, nextChunkEnd).trim());
+                currentPosition = nextChunkEnd;
+            }
+
+            if (chunks.length > 0) {
+                currentChunkIndex = 0;
+                displayCurrentChunk();
+            }
+        }
+
+        function displayCurrentChunk() {
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.innerHTML = '';
+
+            if (chunks.length > 0) {
+                const chunkText = document.createElement('p');
+                chunkText.textContent = chunks[currentChunkIndex];
+                chunkText.style.whiteSpace = "pre-wrap"; // Preserve newlines
+                outputContainer.appendChild(chunkText);
+
+                const navigationDiv = document.createElement('div');
+                navigationDiv.classList.add('chunk-navigation');
+
+                const prevButton = document.createElement('button');
+                prevButton.textContent = 'Previous';
+                prevButton.disabled = currentChunkIndex === 0;
+                prevButton.onclick = () => {
+                    if (currentChunkIndex > 0) {
+                        currentChunkIndex--;
+                        displayCurrentChunk();
+                    }
+                };
+                navigationDiv.appendChild(prevButton);
+
+                const copyButton = document.createElement('button');
+                copyButton.textContent = 'Copy Chunk';
+                copyButton.onclick = () => {
+                    copyChunkToClipboard(chunks[currentChunkIndex]);
+                };
+                navigationDiv.appendChild(copyButton);
+
+                if (currentChunkIndex < chunks.length - 1) {
+                    const nextButton = document.createElement('button');
+                    nextButton.textContent = 'Next';
+                    nextButton.onclick = () => {
+                        if (currentChunkIndex < chunks.length - 1) {
+                            currentChunkIndex++;
+                            displayCurrentChunk();
+                        }
+                    };
+                    navigationDiv.appendChild(nextButton);
+                }
+
+                const chunkInfo = document.createElement('div');
+                chunkInfo.className = 'chunk-info';
+                chunkInfo.textContent = `Chunk ${currentChunkIndex + 1} of ${chunks.length}`;
+
+                outputContainer.appendChild(chunkInfo);
+                outputContainer.appendChild(navigationDiv);
+            }
+        }
+
+        function copyChunkToClipboard(chunk) {
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = chunk;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const toggleButton = document.querySelector('.dark-mode-toggle');
+            toggleButton.classList.toggle('dark-mode');
+        }
+    </script>
+</body>
+</html>
